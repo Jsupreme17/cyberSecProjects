@@ -49,6 +49,38 @@ bool loginUser() {
     return loginSuccess;
 }
 
+// for remove() and rename()
+#include <cstdio>
+void changePassword(string username) {
+    string storedUsername, storedPassword, newPassword;
+    ifstream file("usersInfo.txt");
+    ofstream temp("temp.txt");
+
+    if (!file || !temp) {
+        cout << "Error opening file.\n";
+        return;
+    }
+
+    while (file >> storedUsername >> storedPassword) {
+        if (storedUsername == username) {
+            cout << "Enter new password: ";
+            cin >> newPassword;
+            temp << storedUsername << " " << newPassword << endl;
+        } else {
+            temp << storedUsername << " " << storedPassword << endl;
+        }
+    }
+
+    file.close();
+    temp.close();
+
+    remove("usersInfo.txt");
+    rename("temp.txt", "usersInfo.txt");
+
+    cout << "Password changed successfully.\n";
+}
+
+
 // ---- MAIN PROGRAM ----
 int main() {
     int num;

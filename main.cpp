@@ -1,5 +1,7 @@
 #include <iostream>
-#include <fstream>
+#include <fstream> // file opening
+#include <cstdio> // for remove() and rename()
+
 using namespace std;
 
 // ---- FUNCTION DEFINITIONS ----
@@ -20,7 +22,7 @@ void registerUser() {
     }
 }
 
-bool loginUser() {
+bool loginUser(string& currentUser) {
     string username, password;
     cout << "Login Username: ";
     cin >> username;
@@ -34,6 +36,7 @@ bool loginUser() {
     while (file >> storedUsername >> storedPassword) {
         if (username == storedUsername && password == storedPassword) {
             loginSuccess = true;
+            currentUser = username;
             break;
         }
     }
@@ -49,12 +52,10 @@ bool loginUser() {
     return loginSuccess;
 }
 
-// for remove() and rename()
-#include <cstdio>
-void changePassword(string username) {
+void changePassword(const string& username) {
     string storedUsername, storedPassword, newPassword;
     ifstream file("usersInfo.txt");
-    ofstream temp("temp.txt");
+    ofstream temp("temporary.txt");
 
     if (!file || !temp) {
         cout << "Error opening file.\n";
@@ -75,11 +76,35 @@ void changePassword(string username) {
     temp.close();
 
     remove("usersInfo.txt");
-    rename("temp.txt", "usersInfo.txt");
+    rename("temporary.txt", "usersInfo.txt");
 
     cout << "Password changed successfully.\n";
 }
 
+void deleteAccount(const string& username) {
+    string storedUsername, storedPassword;
+    ifstream file("usersInfo.txt");
+    ofstream temp("temporary.txt");
+
+    if (!file || !temp) {
+        cout << "Error opening file.\n";
+        return;
+    }
+
+    while (file >> storedUsername >> storedPassword) {
+        if (storedUsername != username) {
+            temp << storedUsername << " " << storedPassword << endl;
+        }
+    }
+
+    file.close();
+    temp.close();
+
+    remove("usersInfo.txt");
+    rename("temporary.txt", "usersInfo.txt");
+
+    cout << "Account deleted successfully.\n";
+}
 
 // ---- MAIN PROGRAM ----
 int main() {
@@ -98,13 +123,18 @@ int main() {
                 registerUser();
                 break;
 
-            case 2:
-                if (loginUser()) {
+            case 2: {
+                string currentUser;
+                if (loginUser(currentUser)) {
                     int choice;
-                    do {
-                        cout << "\n--- Log In Menu ---\n";
+                    bool loggedIn = true;
+
+                    while (loggedIn) {
+                        cout << "\n--- Logged In Menu ---\n";
                         cout << "1. View Welcome Message\n";
-                        cout << "2. Logout\n";
+                        cout << "2. Change Password\n";
+                        cout << "3. Delete Account\n";
+                        cout << "4. Logout\n";
                         cout << "Enter your choice: ";
                         cin >> choice;
 
@@ -113,14 +143,23 @@ int main() {
                                 cout << "Welcome! You are now logged in.\n";
                                 break;
                             case 2:
+                                changePassword(currentUser);
+                                break;
+                            case 3:
+                                deleteAccount(currentUser);
+                                loggedIn = false; // auto logout
+                                break;
+                            case 4:
                                 cout << "Logging out...\n";
+                                loggedIn = false;
                                 break;
                             default:
                                 cout << "Invalid option. Try again.\n";
                         }
-                    } while (choice != 2);
+                    }
                 }
                 break;
+            }
 
             case 3:
                 cout << "Goodbye!\n";
@@ -133,3 +172,4 @@ int main() {
 
     return 0;
 }
+
